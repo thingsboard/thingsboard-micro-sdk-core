@@ -1,0 +1,1 @@
+## ThingsBoard Micro SDK Core
