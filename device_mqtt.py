@@ -130,6 +130,14 @@ class TBDeviceMqttClientBase:
     def set_server_side_rpc_request_handler(self, handler):
         self.__device_on_server_side_rpc_response = handler
 
+    def respond_to_server_side_rpc(self, request_id, response):
+        payload = dumps(response)
+        self._client.publish(
+            RPC_RESPONSE_TOPIC + str(request_id),
+            payload,
+            qos=self.quality_of_service,
+        )
+
     def claim_device(self, secret_key=None, duration_ms=None):
         claim_request = {}
         if secret_key:
