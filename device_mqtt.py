@@ -130,7 +130,7 @@ class TBDeviceMqttClientBase:
     def set_server_side_rpc_request_handler(self, handler):
         self.__device_on_server_side_rpc_response = handler
 
-    def respond_to_server_side_rpc(self, request_id, response):
+    def send_rpc_reply(self, request_id, response):
         payload = dumps(response)
         self._client.publish(
             RPC_RESPONSE_TOPIC + str(request_id),
