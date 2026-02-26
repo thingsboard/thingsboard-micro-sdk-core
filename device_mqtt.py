@@ -174,8 +174,16 @@ class TBDeviceMqttClientBase:
         )
 
     def all_subscribed_topics_callback(self, topic, msg):
-        topic = topic.decode("utf-8")
-        print("callback", topic, msg)
+        try:
+            topic = topic.decode("utf-8")
+            msg = loads(msg)
+        except Exception as e:
+            print(
+                "Failed to decode message or topic: {0}.\n Topic: {1}, message: {2}".format(
+                    e, topic, msg
+                )
+            )
+            return
 
         update_response_pattern = (
             "v2/fw/response/" + str(self.__firmware_request_id) + "/chunk/"
@@ -203,13 +211,12 @@ class TBDeviceMqttClientBase:
         if topic.startswith(RPC_REQUEST_TOPIC):
             request_id = topic[len(RPC_REQUEST_TOPIC) : len(topic)]
             if self.__device_on_server_side_rpc_response:
-                self.__device_on_server_side_rpc_response(request_id, loads(msg))
+                self.__device_on_server_side_rpc_response(request_id, msg)
         elif topic.startswith(RPC_RESPONSE_TOPIC):
             request_id = int(topic[len(RPC_RESPONSE_TOPIC) : len(topic)])
             callback = self.__device_client_rpc_dict.pop(request_id)
-            callback(request_id, loads(msg), None)
+            callback(request_id, msg, None)
         elif topic == ATTRIBUTES_TOPIC:
-            msg = loads(msg)
             dict_results = []
             # callbacks for everything
             if self.__device_sub_dict.get("*"):
@@ -232,12 +239,12 @@ class TBDeviceMqttClientBase:
             req_id = int(topic[len(ATTRIBUTES_TOPIC + "/response/") :])
             callback = self._attr_request_dict.pop(req_id)
             if isinstance(callback, tuple):
-                callback[0](loads(msg), None, callback[1])
+                callback[0](msg, None, callback[1])
             else:
-                callback(loads(msg), None)
+                callback(msg, None)
 
         if topic.startswith(ATTRIBUTES_TOPIC):
-            self.firmware_info = loads(msg)
+            self.firmware_info = msg
 
             if "/response/" in topic:
                 self.firmware_info = (
